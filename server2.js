@@ -125,10 +125,9 @@ app.post('/similarity', async (req, res) => {
 
     console.log(mostSimilarDoc);
 
-    let prompt = `You are a bot that gives more information. You look at the given information and give more detail about the user input and relate it to the base information, but don't give me long answers.
-    this is the base information: ${mostSimilarDoc}
-    The user input is: ${inputText}
-    Compile a new information to the user based on the base information and the user input.`;
+    let prompt = `
+    Provide a brief explanation about ${inputText}. Here is a relevant fact:${mostSimilarDoc}
+    but don't refer to that i gave you the fact, pretend that you're are giving it to me yourself.`;
 
     // Fetch additional data from /api/generate
     const additionalData = await fetchAdditionalData(mostSimilarDoc);
