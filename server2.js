@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(express.static('website'));
 
-const port = 1906;
+const port = 1409;
 
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
@@ -127,7 +127,8 @@ app.post('/similarity', async (req, res) => {
 
     let prompt = `
     Provide a brief explanation about ${inputText}. Here is a relevant fact:${mostSimilarDoc}
-    but don't refer to that i gave you the fact, pretend that you're are giving it to me yourself.`;
+    but don't refer to that i gave you the fact, pretend that you're are giving it to me yourself.
+    and speak as i just didn't privde you with any fact at all, and consider the fact i provided you as an absolute fact`;
 
     // Fetch additional data from /api/generate
     const additionalData = await fetchAdditionalData(mostSimilarDoc);
