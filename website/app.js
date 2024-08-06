@@ -1,23 +1,7 @@
-// website/app.js
+let result=document.querySelector(".result");
+let btn=document.querySelector("button");
+let txt=document.querySelector("textarea");
 
-document.getElementById('showcart').addEventListener('click', () => {
-    getData(`/print`)
-        .then(data => {
-            console.log(data); // JSON data parsed by `response.json()` call
-        })
-        .catch(error => {
-            console.error('Fetch error:', error);
-        });
-});
-
-
-document.getElementById('sendData').addEventListener('click', () => {
-    const idd = document.getElementById('cart').value;
-    postData('/cart', { productId: +idd })
-        .then(data => {
-            console.log(data); // JSON data parsed by `response.json()` call
-        });
-});
 
 const postData = async (url = '', data = {}) => {
     const response = await fetch(url, {
@@ -38,30 +22,14 @@ const postData = async (url = '', data = {}) => {
     }
 }
 
-document.getElementById('getData').addEventListener('click', () => {
-    const productId = document.getElementById('productId').value;
-    getData(`/product?id=${productId}`)
+btn.addEventListener('click', () => {
+    const userInput = txt.value;
+    result.innerHTML="loading...";
+    result.classList.add("hide-pseudo");
+    postData('/similarity', { inputText: userInput })
         .then(data => {
             console.log(data); // JSON data parsed by `response.json()` call
-        })
-        .catch(error => {
-            console.error('Fetch error:', error);
+            result.innerHTML=data.mostSimilarDocument.document;
+
         });
 });
-
-const getData = async (url = '') => {
-    const response = await fetch(url, {
-        method: 'GET', // *GET, POST, PUT, DELETE, etc.
-        credentials: 'same-origin', // include, *same-origin, omit
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    });
-    try {
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.log("error", error);
-        // appropriately handle the error
-    }
-}

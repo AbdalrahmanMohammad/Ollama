@@ -4,7 +4,6 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const { sumOutType } = require('@tensorflow/tfjs-node');
 
 config({ path: '.env.local' });
 
@@ -13,13 +12,12 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(express.static('website'));
 
-const port = 7958;
+const port = 1903;
 
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
 const documents = [
   "endeavorpal is a software development company that develop digital products and it is located in nablus, palestine",
-  "Ahmad likes to play football with his friends in his free time, it is his hobby.",
   "Water boils at 100 degrees Celsius at standard atmospheric pressure.",
   "Honey never spoils and archaeologists have found pots of honey in ancient Egyptian tombs that are over 3,000 years old and still edible.",
   "Mount Everest is the tallest mountain in the world, standing at 29,032 feet above sea level.",
@@ -35,16 +33,11 @@ const hf = new HfInference('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');
 
 const computeSimilarity = async (inputText) => {
   try {
-    // Adjust the method call to the expected format
     const generateEmbeddings = await hf.featureExtraction({
       model: 'sentence-transformers/all-MiniLM-L6-v2',
-      inputs: [inputText, ...documents] // Ensure this is the correct format
+      inputs: [inputText, ...documents]
     });
 
-    // Check if embeddings are correctly generated
-    // console.log('Embeddings:', generateEmbeddings);
-
-    // Ensure the correct format for embeddings
     if (generateEmbeddings.length !== documents.length + 1) {
       throw new Error('Mismatch in number of embeddings generated');
     }
@@ -59,35 +52,45 @@ const computeSimilarity = async (inputText) => {
       return dotProduct / (magnitudeA * magnitudeB);
     };
 
-    let biggestSimilarity = -99999;
-    let mostSimilarityDoc = "";
+    let biggestSimilarity = -Infinity;
+    let mostSimilarDoc = "";
 
     const similarities = documents.map((document, index) => {
-      // Ensure embeddings are correctly retrieved
-      // console.log(`Document ${index} Embedding:`, documentEmbeddings[index]);
-
       const similarity = cosineSimilarity(inputEmbedding, documentEmbeddings[index]);
       if (similarity > biggestSimilarity) {
         biggestSimilarity = similarity;
-        mostSimilarityDoc = document;
+        mostSimilarDoc = document;
       }
       return {
         document,
-        similarity: (similarity * 100).toFixed(2) // Convert to percentage and round to 2 decimal places
+        similarity: (similarity * 100).toFixed(2)
       };
     });
 
-    console.log('Similarities:', similarities);
-
-    console.log("*********************");
-    console.log(biggestSimilarity);
-    console.log(mostSimilarityDoc);
-    console.log("*********************");
-
+    return {
+      similarities,
+      mostSimilarDocument: {
+        document: mostSimilarDoc,
+        similarity: (biggestSimilarity * 100).toFixed(2)
+      }
+    };
   } catch (error) {
     console.error('Error computing similarity:', error);
+    throw error;
   }
 };
 
-const inputText = 'physics is important';
-computeSimilarity(inputText);
+app.post('/similarity', async (req, res) => {
+  try {
+    const { inputText } = req.body;
+    if (!inputText) {
+      return res.status(400).json({ error: 'Input text is required' });
+    }
+
+    const result = await computeSimilarity(inputText);
+    res.json(result);
+  } catch (error) {
+    console.error('Error in POST /similarity:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
