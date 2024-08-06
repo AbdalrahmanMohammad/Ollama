@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(express.static('website'));
 
-const port = 1903;
+const port = 1906;
 
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
@@ -80,6 +80,35 @@ const computeSimilarity = async (inputText) => {
   }
 };
 
+
+const fetchAdditionalData = async (document) => {
+  try {
+    const response = await fetch('http://localhost:11434/api/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama3.1',
+        prompt: document,
+        stream: false
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get response from /api/generate');
+    }
+
+    const data = await response.json();
+    return data.response; // Return only the `response` field
+  } catch (error) {
+    console.error('Error fetching additional data:', error);
+    throw error; // Re-throw the error to be caught in the caller function
+  }
+};
+
+
+
 app.post('/similarity', async (req, res) => {
   try {
     const { inputText } = req.body;
@@ -87,8 +116,34 @@ app.post('/similarity', async (req, res) => {
       return res.status(400).json({ error: 'Input text is required' });
     }
 
+    // Compute the similarity
     const result = await computeSimilarity(inputText);
-    res.json(result);
+
+    console.log(result);
+
+    const mostSimilarDoc = result.mostSimilarDocument.document;
+
+    console.log(mostSimilarDoc);
+
+    let prompt = `You are a bot that gives more information. You look at the given information and give more detail about the user input and relate it to the base information, but don't give me long answers.
+    this is the base information: ${mostSimilarDoc}
+    The user input is: ${inputText}
+    Compile a new information to the user based on the base information and the user input.`;
+
+    // Fetch additional data from /api/generate
+    const additionalData = await fetchAdditionalData(mostSimilarDoc);
+
+    console.log("done");
+
+    // Combine the results
+    const combinedResult = {
+      ...result,
+      additionalData // Add the response from /api/generate to the result
+    };
+
+    // Send the combined result back to the user
+    return res.json(combinedResult);
+
   } catch (error) {
     console.error('Error in POST /similarity:', error);
     res.status(500).json({ error: 'Internal Server Error' });

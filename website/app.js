@@ -29,7 +29,7 @@ btn.addEventListener('click', () => {
     postData('/similarity', { inputText: userInput })
         .then(data => {
             console.log(data); // JSON data parsed by `response.json()` call
-            result.innerHTML=data.mostSimilarDocument.document;
+            result.innerHTML=data.additionalData;
 
         });
 });
