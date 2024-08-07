@@ -32,6 +32,7 @@ const fetchStreamingData = async ( document) => {
             console.log(JSON.parse(chunk).response);
 
             result.innerHTML += JSON.parse(chunk).response;
+            scrollToBottom(); 
 
         }
 
@@ -41,16 +42,24 @@ const fetchStreamingData = async ( document) => {
     }
 };
 
+///////////////////
+const scrollToBottom = () => {
+    result.scrollTop = result.scrollHeight;
+};
+
 //////////////////////////////////////////////////////////////////////
 
 btn.addEventListener('click', () => {
     const userInput = txt.value;
     result.innerHTML = "";
     result.style.backgroundColor = "rgb(153, 147, 147)";
+    result.style.opacity = "100%";
+
 
     result.classList.add("hide-pseudo");
     fetchStreamingData(userInput )
         .then(() => {
-            result.style.backgroundColor = "white";
+            result.style.opacity = "80%";
         });
 });
+
