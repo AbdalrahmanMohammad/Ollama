@@ -21,7 +21,7 @@ app.listen(port, () => console.log(`Server running on port ${port}`));
 
 app.post('/fetch-data', async (req, res) => {
   const { document } = req.body;
-  
+
   try {
     const response = await fetch('http://localhost:11434/api/generate', {
       method: 'POST',
@@ -40,7 +40,6 @@ app.post('/fetch-data', async (req, res) => {
       return;
     }
 
-console.log("teeest");
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
@@ -51,10 +50,10 @@ console.log("teeest");
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      res.write(decoder.decode(value, { stream: true }));
-      
 
       const chunk = decoder.decode(value, { stream: true });
+
+      res.write(chunk);
 
       console.log(JSON.parse(chunk).response);
     }

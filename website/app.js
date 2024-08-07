@@ -4,7 +4,7 @@ let result = document.querySelector(".result");
 
 const fetchStreamingData = async (document) => {
     try {
-        const response = await fetch('http://localhost:1060/fetch-data', {
+        const response = await fetch('/fetch-data', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -33,7 +33,7 @@ const fetchStreamingData = async (document) => {
             result.innerHTML+=JSON.parse(chunk).response;
 
         }
-
+        
         console.log('Final data:', accumulatedData);
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -41,4 +41,4 @@ const fetchStreamingData = async (document) => {
 };
 
 // Example usage
-fetchStreamingData('tell me a dad joke');
+fetchStreamingData('who are you');
