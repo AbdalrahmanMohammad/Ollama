@@ -32,7 +32,7 @@ textarea {
 
 .result {
     width: 50%;
-    background-color: rgb(153, 147, 147);
+    background-color: white;
     font-size: 30px;
     padding: 23px;
     position: relative;
@@ -42,7 +42,7 @@ textarea {
 .result::before {
     content: "result";
     position: absolute;
-    top: 40px;
+    top: -40px;
     left: 40px;
     /* transform: translateX(-50%); */
     font-size: 30px;

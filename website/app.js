@@ -1,8 +1,9 @@
-
-
 let result = document.querySelector(".result");
+let btn = document.querySelector("button");
+let txt = document.querySelector("textarea");
 
-const fetchStreamingData = async (document) => {
+
+const fetchStreamingData = async ( document) => {
     try {
         const response = await fetch('/similarity', {
             method: 'POST',
@@ -13,12 +14,12 @@ const fetchStreamingData = async (document) => {
         });
 
         if (!response.ok) {
-            throw new Error('Failed to get response from /fetch-data');
+            throw new Error('Failed to get response from /similarity');
         }
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
-
+        
         let accumulatedData = '';
 
         while (true) {
@@ -30,7 +31,7 @@ const fetchStreamingData = async (document) => {
 
             console.log(JSON.parse(chunk).response);
 
-            result.innerHTML+=JSON.parse(chunk).response;
+            result.innerHTML += JSON.parse(chunk).response;
 
         }
 
@@ -40,5 +41,16 @@ const fetchStreamingData = async (document) => {
     }
 };
 
-// Example usage
-fetchStreamingData('what is the best programming company?');
+//////////////////////////////////////////////////////////////////////
+
+btn.addEventListener('click', () => {
+    const userInput = txt.value;
+    result.innerHTML = "";
+    result.style.backgroundColor = "rgb(153, 147, 147)";
+
+    result.classList.add("hide-pseudo");
+    fetchStreamingData(userInput )
+        .then(() => {
+            result.style.backgroundColor = "white";
+        });
+});

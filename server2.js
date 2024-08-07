@@ -12,14 +12,9 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(express.static('website'));
 
-const port = 1070;
+const port = 1080;
 
 app.listen(port, () => console.log(`Server running on port ${port}`));
-
-
-
-
-
 
 const documents = [
   "endeavorpal is a software development company that develop digital products and it is located in nablus, palestine",
