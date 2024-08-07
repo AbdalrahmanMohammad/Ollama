@@ -12,16 +12,16 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(express.static('website'));
 
-const port = 1968;
+const port = 1060;
 
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
 
 
 
-
-
-const fetchAdditionalData = async (document) => {
+app.post('/fetch-data', async (req, res) => {
+  const { document } = req.body;
+  
   try {
     const response = await fetch('http://localhost:11434/api/generate', {
       method: 'POST',
@@ -31,36 +31,38 @@ const fetchAdditionalData = async (document) => {
       body: JSON.stringify({
         model: 'llama3.1',
         prompt: document,
-        stream: true // Set stream to true to enable streaming
+        stream: true // Enable streaming
       }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to get response from /api/generate');
+      res.status(response.status).send('Failed to get response from /api/generate');
+      return;
     }
+
+console.log("teeest");
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
-    let accumulatedResponse = '';
 
+    res.setHeader('Content-Type', 'text/plain');
+
+    // Stream data to client
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+      res.write(decoder.decode(value, { stream: true }));
+      
 
-      // Decode and accumulate the response
       const chunk = decoder.decode(value, { stream: true });
-      accumulatedResponse += JSON.parse(chunk).response;
 
       console.log(JSON.parse(chunk).response);
-
     }
-    console.log(accumulatedResponse);
 
-    return accumulatedResponse; // Return the accumulated response
+    res.end();
   } catch (error) {
     console.error('Error fetching additional data:', error);
-    throw error; // Re-throw the error to be caught in the caller function
+    res.status(500).send('Error fetching additional data');
   }
-};
+});
 
-fetchAdditionalData("tell me a dad joke");
