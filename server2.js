@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(express.static('website'));
 
-const port = 1409;
+const port = 1080;
 
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
@@ -80,44 +80,11 @@ const computeSimilarity = async (inputText) => {
   }
 };
 
-
-const fetchAdditionalData = async (document) => {
-  try {
-    const response = await fetch('http://localhost:11434/api/generate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama3.1',
-        prompt: document,
-        stream: false
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to get response from /api/generate');
-    }
-
-    const data = await response.json();
-    return data.response; // Return only the `response` field
-  } catch (error) {
-    console.error('Error fetching additional data:', error);
-    throw error; // Re-throw the error to be caught in the caller function
-  }
-};
-
-
-
 app.post('/similarity', async (req, res) => {
+  const { document } = req.body;
   try {
-    const { inputText } = req.body;
-    if (!inputText) {
-      return res.status(400).json({ error: 'Input text is required' });
-    }
 
-    // Compute the similarity
-    const result = await computeSimilarity(inputText);
+    const result = await computeSimilarity(document);
 
     console.log(result);
 
@@ -126,26 +93,50 @@ app.post('/similarity', async (req, res) => {
     console.log(mostSimilarDoc);
 
     let prompt = `
-    Provide a brief explanation about ${inputText}. Here is a relevant fact:${mostSimilarDoc}
+    Provide a brief explanation about ${document}. Here is a relevant fact:${mostSimilarDoc}
     but don't refer to that i gave you the fact, pretend that you're are giving it to me yourself.
     and speak as i just didn't privde you with any fact at all, and consider the fact i provided you as an absolute fact`;
 
-    // Fetch additional data from /api/generate
-    const additionalData = await fetchAdditionalData(mostSimilarDoc);
 
-    console.log("done");
+    const response = await fetch('http://localhost:11434/api/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama3.1',
+        prompt: prompt,
+        stream: true // Enable streaming
+      }),
+    });
 
-    // Combine the results
-    const combinedResult = {
-      ...result,
-      additionalData // Add the response from /api/generate to the result
-    };
+    if (!response.ok) {
+      res.status(response.status).send('Failed to get response from /api/generate');
+      return;
+    }
 
-    // Send the combined result back to the user
-    return res.json(combinedResult);
 
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+
+    res.setHeader('Content-Type', 'text/plain');
+
+    // Stream data to client
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+
+      res.write(chunk);
+
+      console.log(JSON.parse(chunk).response);
+    }
+
+    res.end();
   } catch (error) {
-    console.error('Error in POST /similarity:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Error fetching additional data:', error);
+    res.status(500).send('Error fetching additional data');
   }
 });
+
